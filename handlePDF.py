@@ -94,6 +94,7 @@ def check_new_path():
         if os.path.exists(check_newpath):
             global new_filepath
             new_filepath = check_newpath
+    return new_filepath
 
 def copy_origin_file():
     if origin_path.get() == '':
@@ -104,11 +105,11 @@ def copy_origin_file():
         base_dir_path = get_dirpath(origin_filepath)
         origin_filename = get_filename(origin_filepath)
         filedirpath = os.path.join(base_dir_path, origin_filename)
+        new_filepath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
         if not os.path.exists(filedirpath):
             os.mkdir(filedirpath)
-        new_filepath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
-        shutil.copyfile(origin_filepath, new_filepath)
-        alerm_msg(reminder_title, copy_finish_msg) 
+            shutil.copyfile(origin_filepath, new_filepath)
+            alerm_msg(reminder_title, copy_finish_msg) 
         
 def rotate_page(rotate_pages, rotate_direction, file_path):
     if rotate_direction == '90':

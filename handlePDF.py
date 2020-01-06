@@ -7,6 +7,7 @@ import shutil
 
 from PyPDF2 import PdfFileReader as pdfreader, PdfFileWriter as pdfwriter
 import webbrowser
+import time
 
 
 
@@ -83,6 +84,17 @@ def chose_file1():
     _path1 = askopenfilename()
     origin_path.set(_path1)
 
+def check_new_path():
+    if origin_path.get() != '':
+        origin_filepath = origin_path.get()
+        base_dir_path = get_dirpath(origin_filepath)
+        origin_filename = get_filename(origin_filepath)
+        filedirpath = os.path.join(base_dir_path, origin_filename)
+        check_newpath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
+        if os.path.exists(check_newpath):
+            global new_filepath
+            new_filepath = check_newpath
+
 def copy_origin_file():
     if origin_path.get() == '':
         alerm_msg(warning_title, chose_error_msg)
@@ -123,6 +135,7 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
         
 
 def display_pages(lb_lists=[]):
+    check_new_path()
     if new_filepath != '':
         lb_list.set('')
         input_num_str = chose_handler_str.get()
@@ -149,7 +162,6 @@ def display_pages(lb_lists=[]):
                         alerm_msg(warning_title, range_error_msg)
                         chose_handler_str.set('')
                         break
-                    
                 page_lists.sort()            
             else:
                 alerm_msg(warning_title, range_error_msg)
@@ -253,3 +265,10 @@ Button(fbot, text='退       出', command=tk.quit).pack()
 
 
 tk.mainloop()
+
+# if new_filepath != '':
+#     finish_time_str = time.strftime('_%m_%d-%H', time.localtime(time.time()))
+#     last_filepath = new_filepath[:-4] + finish_time_str + new_filepath[-4:]
+#     shutil.copyfile(new_filepath, last_filepath)
+#     print('请放心，修改已经备份')
+

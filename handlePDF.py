@@ -32,8 +32,11 @@ check_dirpath = ''
 warning_title = '警告'
 reminder_title = '提示'
 
+
 chose_page_msg = '请先选择页码'
-finish_msg = '副本生成完成！'
+del_dir_msg = '缓存文件已清空'
+rotate_finish_msg = '翻转完成'
+copy_finish_msg = '副本生成完成！'
 safe_msg = '为了安全，请先生成副本文件!'
 
 chose_error_msg = '请选择起始文件！'
@@ -93,7 +96,7 @@ def copy_origin_file():
             os.mkdir(filedirpath)
         new_filepath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
         shutil.copyfile(origin_filepath, new_filepath)
-        alerm_msg(warning_title, finish_msg) 
+        alerm_msg(reminder_title, copy_finish_msg) 
         
 def rotate_page(rotate_pages, rotate_direction, file_path):
     if rotate_direction == '90':
@@ -146,7 +149,8 @@ def display_pages(lb_lists=[]):
                         alerm_msg(warning_title, range_error_msg)
                         chose_handler_str.set('')
                         break
-                page_lists.sort()
+                    
+                page_lists.sort()            
             else:
                 alerm_msg(warning_title, range_error_msg)
                 chose_handler_str.set('')
@@ -162,9 +166,10 @@ def display_pages(lb_lists=[]):
                     lb.configure(yscrollcommand=scroll.set)
                 elif lb_lists == 'allfile':
                     rotate_page(page_lists, radio_var.get(), new_filepath)
+                    alerm_msg(reminder_title, rotate_finish_msg)
     else:
         alerm_msg(reminder_title, safe_msg)
-
+        
 
 def open_page_web():
     if new_filepath == '':
@@ -198,10 +203,13 @@ def rotate_one_page(r_direction):
         alerm_msg(warning_title, chose_page_msg)
     else:
         rotate_page([int(page_num)], r_direction, new_filepath)
+        open_page_web()
+
 
 def del_dir():
     if os.path.exists(check_dirpath):
         shutil.rmtree(check_dirpath)
+        alerm_msg(reminder_title, del_dir_msg)
 
 
 Label(ftop, text='起始路径').grid(row=0, column=0)

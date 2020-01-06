@@ -1,7 +1,7 @@
-from tkinter.filedialog import askdirectory, askopenfilename
-from tkinter import messagebox, StringVar, Label, Entry, Button, Listbox, Radiobutton, Text, Tk
-from tkinter import Scale, Listbox, Spinbox, Frame, Scrollbar
-from tkinter import BOTH, X, Y, LEFT, RIGHT, N,S,E,W, NSEW, CENTER, END, YES
+from tkinter.filedialog import askopenfilename
+from tkinter import messagebox, StringVar, Tk
+from tkinter import Label, Entry, Button, Listbox, Radiobutton, Frame, Scrollbar
+from tkinter import BOTH, X, Y, LEFT, RIGHT, N, S, E, W, YES
 import os
 import shutil
 
@@ -145,7 +145,8 @@ def display_pages(lb_lists=[]):
                     except ValueError:
                         alerm_msg(warning_title, range_error_msg)
                         chose_handler_str.set('')
-                        break            
+                        break
+                page_lists.sort()
             else:
                 alerm_msg(warning_title, range_error_msg)
                 chose_handler_str.set('')

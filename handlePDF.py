@@ -28,20 +28,24 @@ origin_filepath = ''
 origin_filename = ''
 new_filepath = ''
 check_dirpath = ''
+filedirpath = ''
 
 
-warning_title = '警告'
 reminder_title = '提示'
+warning_title = '警告'
+error_title = '错误'
 
 
-chose_page_msg = '请先选择页码'
-del_dir_msg = '缓存文件已清空'
-rotate_finish_msg = '翻转完成'
-copy_finish_msg = '副本生成完成！'
-safe_msg = '为了安全，请先生成副本文件!'
+warning_chose_page_msg = '请先选择页码!'
+warning_safe_msg = '为了安全，请先生成副本文件!'
+warning_cover_copy_msg = '副本文件已存在，是否覆盖？'
 
-chose_error_msg = '请选择起始文件！'
-range_error_msg = '请输入范围，使用‘-’相连，或者输入多个不连续的页数，使用‘+’相连'
+reminder_del_dir_msg = '缓存文件已清空!'
+reminder_rotate_finish_msg = '翻转完成!'
+reminder_copy_finish_msg = '副本生成完成！'
+
+error_chose_msg = '请选择起始文件！'
+error_range_msg = '请输入范围，使用‘-’相连，或者输入多个不连续的页数，使用‘+’相连!'
 
 
 # Web open 
@@ -78,7 +82,16 @@ fbot.grid(row=2, column=0, sticky=S)
 
 
 def alerm_msg(tit, msg):
-    messagebox.showinfo(title=tit, message=msg)
+    if tit == '提示':
+        messagebox.showinfo(tit, msg)
+    elif tit == '警告':
+        messagebox.showwarning(tit, msg)
+    elif tit == '错误':
+        messagebox.showerror(tit, msg)
+    
+def alerm_chose_msg(tit, msg):
+    return messagebox.askokcancel(tit, msg)
+    
 
 def chose_file1():
     _path1 = askopenfilename()
@@ -86,30 +99,35 @@ def chose_file1():
 
 def check_new_path():
     if origin_path.get() != '':
-        origin_filepath = origin_path.get()
-        base_dir_path = get_dirpath(origin_filepath)
-        origin_filename = get_filename(origin_filepath)
-        filedirpath = os.path.join(base_dir_path, origin_filename)
-        check_newpath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
-        if os.path.exists(check_newpath):
-            global new_filepath
-            new_filepath = check_newpath
-    return new_filepath
-
-def copy_origin_file():
-    if origin_path.get() == '':
-        alerm_msg(warning_title, chose_error_msg)
-    else:
-        global origin_filepath, origin_filename, new_filepath
+        global origin_filepath, origin_filename, filedirpath, new_filepath
         origin_filepath = origin_path.get()
         base_dir_path = get_dirpath(origin_filepath)
         origin_filename = get_filename(origin_filepath)
         filedirpath = os.path.join(base_dir_path, origin_filename)
         new_filepath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
-        if not os.path.exists(filedirpath):
-            os.mkdir(filedirpath)
+        # if os.path.exists(check_newpath):
+        #     new_filepath = check_newpath
+        # return 'is_copied'
+    else:
+        alerm_msg(error_title, error_chose_msg)
+    
+
+def copy_origin_file():
+    check_new_path()
+    
+    if not os.path.exists(filedirpath) and filedirpath != '':
+        os.mkdir(filedirpath)
+    print(new_filepath)
+
+    if os.path.exists(new_filepath):
+        is_cover = alerm_chose_msg(warning_title, warning_cover_copy_msg)
+        if is_cover:
             shutil.copyfile(origin_filepath, new_filepath)
-            alerm_msg(reminder_title, copy_finish_msg) 
+            alerm_msg(reminder_title, reminder_copy_finish_msg)
+    elif new_filepath != '':
+        shutil.copyfile(origin_filepath, new_filepath)
+        alerm_msg(reminder_title, reminder_copy_finish_msg)
+            
         
 def rotate_page(rotate_pages, rotate_direction, file_path):
     if rotate_direction == '90':
@@ -136,7 +154,10 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
         
 
 def display_pages(lb_lists=[]):
+    # flag = check_new_path()
+    # if flag == 'is_copied':
     check_new_path()
+    print(new_filepath)
     if new_filepath != '':
         lb_list.set('')
         input_num_str = chose_handler_str.get()
@@ -149,7 +170,7 @@ def display_pages(lb_lists=[]):
                     start_num = int(input_num_str.split('-')[0])
                     end_num = int(input_num_str.split('-')[1]) + 1
                 except ValueError:
-                    alerm_msg(warning_title, range_error_msg)
+                    alerm_msg(error_title, error_range_msg)
                     chose_handler_str.set('')
                 else:
                     for i in range(start_num, end_num):
@@ -160,12 +181,12 @@ def display_pages(lb_lists=[]):
                     try:
                         page_lists.append(int(i))
                     except ValueError:
-                        alerm_msg(warning_title, range_error_msg)
+                        alerm_msg(error_title, error_range_msg)
                         chose_handler_str.set('')
                         break
                 page_lists.sort()            
             else:
-                alerm_msg(warning_title, range_error_msg)
+                alerm_msg(error_title, error_range_msg)
                 chose_handler_str.set('')
         else:
             page_lists.append(handler_page)
@@ -179,18 +200,18 @@ def display_pages(lb_lists=[]):
                     lb.configure(yscrollcommand=scroll.set)
                 elif lb_lists == 'allfile':
                     rotate_page(page_lists, radio_var.get(), new_filepath)
-                    alerm_msg(reminder_title, rotate_finish_msg)
+                    alerm_msg(reminder_title, reminder_rotate_finish_msg)
     else:
-        alerm_msg(reminder_title, safe_msg)
+        alerm_msg(warning_title, warning_safe_msg)
         
 
 def open_page_web():
     if new_filepath == '':
-        alerm_msg(reminder_title, safe_msg)
+        alerm_msg(warning_title, warning_safe_msg)
     try:
         page_num = str(lb.get(lb.curselection()))
     except Exception:
-        alerm_msg(warning_title, chose_page_msg)
+        alerm_msg(warning_title, warning_chose_page_msg)
     else:
         global check_dirpath
         check_dirpath = os.path.join(get_dirpath(new_filepath), 'web_check')
@@ -209,11 +230,11 @@ def open_page_web():
 
 def rotate_one_page(r_direction):
     if new_filepath == '':
-        alerm_msg(warning_title, safe_msg)
+        alerm_msg(warning_title, warning_safe_msg)
     try:
         page_num = str(lb.get(lb.curselection()))
     except Exception:
-        alerm_msg(warning_title, chose_page_msg)
+        alerm_msg(warning_title, warning_chose_page_msg)
     else:
         rotate_page([int(page_num)], r_direction, new_filepath)
         open_page_web()
@@ -222,7 +243,7 @@ def rotate_one_page(r_direction):
 def del_dir():
     if os.path.exists(check_dirpath):
         shutil.rmtree(check_dirpath)
-        alerm_msg(reminder_title, del_dir_msg)
+        alerm_msg(reminder_title, reminder_del_dir_msg)
 
 
 Label(ftop, text='起始路径').grid(row=0, column=0)

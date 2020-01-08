@@ -29,6 +29,7 @@ origin_filename = ''
 new_filepath = ''
 check_dirpath = ''
 filedirpath = ''
+check_newpath = ''
 
 
 reminder_title = '提示'
@@ -44,7 +45,7 @@ reminder_del_dir_msg = '缓存文件已清空!'
 reminder_rotate_finish_msg = '翻转完成!'
 reminder_copy_finish_msg = '副本生成完成！'
 
-error_chose_msg = '请选择起始文件！'
+error_chose_path_msg = '请选择起始文件！'
 error_range_msg = '请输入范围，使用‘-’相连，或者输入多个不连续的页数，使用‘+’相连!'
 
 
@@ -99,33 +100,35 @@ def chose_file1():
 
 def check_new_path():
     if origin_path.get() != '':
-        global origin_filepath, origin_filename, filedirpath, new_filepath
+        global origin_filepath, origin_filename, filedirpath, new_filepath, check_newpath
         origin_filepath = origin_path.get()
         base_dir_path = get_dirpath(origin_filepath)
         origin_filename = get_filename(origin_filepath)
         filedirpath = os.path.join(base_dir_path, origin_filename)
-        new_filepath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
-        # if os.path.exists(check_newpath):
-        #     new_filepath = check_newpath
-        # return 'is_copied'
+        check_newpath = os.path.join(filedirpath, origin_filename+'{}'.format(origin_filepath[-4:]))
+        if os.path.exists(check_newpath):
+            new_filepath = check_newpath
+            return True
+        # else:
+        #     new_filepath = ''
     else:
-        alerm_msg(error_title, error_chose_msg)
+        alerm_msg(error_title, error_chose_path_msg)
+        return False
     
 
 def copy_origin_file():
-    check_new_path()
-    
+    flag = check_new_path()
+    # if flag: 
+    print(flag)
     if not os.path.exists(filedirpath) and filedirpath != '':
         os.mkdir(filedirpath)
-    print(new_filepath)
-
     if os.path.exists(new_filepath):
         is_cover = alerm_chose_msg(warning_title, warning_cover_copy_msg)
         if is_cover:
             shutil.copyfile(origin_filepath, new_filepath)
             alerm_msg(reminder_title, reminder_copy_finish_msg)
-    elif new_filepath != '':
-        shutil.copyfile(origin_filepath, new_filepath)
+    elif check_newpath != '':
+        shutil.copyfile(origin_filepath, check_newpath)
         alerm_msg(reminder_title, reminder_copy_finish_msg)
             
         
@@ -154,55 +157,55 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
         
 
 def display_pages(lb_lists=[]):
-    # flag = check_new_path()
-    # if flag == 'is_copied':
-    check_new_path()
-    print(new_filepath)
-    if new_filepath != '':
-        lb_list.set('')
-        input_num_str = chose_handler_str.get()
-        page_lists = []
-        try:
-            handler_page = int(input_num_str)
-        except ValueError:
-            if '-' in input_num_str:
-                try:
-                    start_num = int(input_num_str.split('-')[0])
-                    end_num = int(input_num_str.split('-')[1]) + 1
-                except ValueError:
-                    alerm_msg(error_title, error_range_msg)
-                    chose_handler_str.set('')
-                else:
-                    for i in range(start_num, end_num):
-                        page_lists.append(i)
-            elif '+' in input_num_str:
-                page_split_lists = input_num_str.split('+')
-                for i in set(page_split_lists):
+    flag = check_new_path()
+    if flag:
+    # check_new_path()
+    # print(new_filepath)
+        if check_newpath != '':
+            lb_list.set('')
+            input_num_str = chose_handler_str.get()
+            page_lists = []
+            try:
+                handler_page = int(input_num_str)
+            except ValueError:
+                if '-' in input_num_str:
                     try:
-                        page_lists.append(int(i))
+                        start_num = int(input_num_str.split('-')[0])
+                        end_num = int(input_num_str.split('-')[1]) + 1
                     except ValueError:
                         alerm_msg(error_title, error_range_msg)
                         chose_handler_str.set('')
-                        break
-                page_lists.sort()            
+                    else:
+                        for i in range(start_num, end_num):
+                            page_lists.append(i)
+                elif '+' in input_num_str:
+                    page_split_lists = input_num_str.split('+')
+                    for i in set(page_split_lists):
+                        try:
+                            page_lists.append(int(i))
+                        except ValueError:
+                            alerm_msg(error_title, error_range_msg)
+                            chose_handler_str.set('')
+                            break
+                    page_lists.sort()            
+                else:
+                    alerm_msg(error_title, error_range_msg)
+                    chose_handler_str.set('')
             else:
-                alerm_msg(error_title, error_range_msg)
-                chose_handler_str.set('')
-        else:
-            page_lists.append(handler_page)
-        finally:
-            if page_lists != []:
-                chose_handler_str.set('')
-                if lb_lists == []:
-                    for p in page_lists:
-                        lb.insert('end', p)
-                    # 设置self.lb的纵向滚动影响scroll滚动条
-                    lb.configure(yscrollcommand=scroll.set)
-                elif lb_lists == 'allfile':
-                    rotate_page(page_lists, radio_var.get(), new_filepath)
-                    alerm_msg(reminder_title, reminder_rotate_finish_msg)
-    else:
-        alerm_msg(warning_title, warning_safe_msg)
+                page_lists.append(handler_page)
+            finally:
+                if page_lists != []:
+                    chose_handler_str.set('')
+                    if lb_lists == []:
+                        for p in page_lists:
+                            lb.insert('end', p)
+                        # 设置self.lb的纵向滚动影响scroll滚动条
+                        lb.configure(yscrollcommand=scroll.set)
+                    elif lb_lists == 'allfile':
+                        rotate_page(page_lists, radio_var.get(), new_filepath)
+                        alerm_msg(reminder_title, reminder_rotate_finish_msg)
+        elif new_filepath == '':
+            alerm_msg(warning_title, warning_safe_msg)
         
 
 def open_page_web():

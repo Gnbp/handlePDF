@@ -122,7 +122,8 @@ def copy_origin_file():
     print(flag)
     if not os.path.exists(filedirpath) and filedirpath != '':
         os.mkdir(filedirpath)
-    if os.path.exists(new_filepath):
+    print(new_filepath)
+    if os.path.exists(new_filepath) and new_filepath == check_newpath:
         is_cover = alerm_chose_msg(warning_title, warning_cover_copy_msg)
         if is_cover:
             shutil.copyfile(origin_filepath, new_filepath)

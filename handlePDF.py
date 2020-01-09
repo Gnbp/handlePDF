@@ -8,6 +8,7 @@ from tkinter import BOTH, X, Y, LEFT, RIGHT, N, S, E, W, YES
 
 
 from PyPDF2 import PdfFileReader as pdfreader, PdfFileWriter as pdfwriter
+from PyPDF2.utils import PdfReadError
 
 
 
@@ -95,10 +96,22 @@ def alerm_msg(tit, msg):
 def alerm_chose_msg(tit, msg):
     return messagebox.askokcancel(tit, msg)
     
+# 需要开启多线程查看PDF文件页数
+def get_pdf_pages(filepath):
+    try:
+        page_nums = pdfreader(filepath).getNumPages()
+    except PdfReadError:
+        page_nums = 0
+    finally:
+        return page_nums
 
 def chose_file1():
     _path1 = askopenfilename()
     origin_path.set(_path1)
+    print('1'*80)
+    pages = get_pdf_pages(_path1)
+    print(pages)
+    print('1'*80)
 
 def check_new_path():
     if origin_path.get() != '':
@@ -151,7 +164,7 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
             writer_obj.addPage(page_num_obj)
         with open(file_path, 'wb') as fw:
             writer_obj.write(fw)
-    except Exception:
+    except PdfReadError:
         alerm_msg(error_title, error_file_msg)
         return 'file_error'
     else:
@@ -228,7 +241,7 @@ def open_page_web():
             pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
             with open(check_file_path, 'wb') as fw:
                 pdf_writer.write(fw)
-        except Exception:
+        except PdfReadError:
             alerm_msg(error_title, error_file_msg)
         else:
             add_web_prefix_file = WEB_TITLE + check_file_path

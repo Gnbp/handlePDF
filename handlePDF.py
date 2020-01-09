@@ -1,12 +1,14 @@
+import os
+import shutil
+import webbrowser
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox, StringVar, Tk
 from tkinter import Label, Entry, Button, Listbox, Radiobutton, Frame, Scrollbar
 from tkinter import BOTH, X, Y, LEFT, RIGHT, N, S, E, W, YES
-import os
-import shutil
+
 
 from PyPDF2 import PdfFileReader as pdfreader, PdfFileWriter as pdfwriter
-import webbrowser
+
 
 
 
@@ -111,7 +113,6 @@ def check_new_path():
             return True
     else:
         alerm_msg(error_title, error_chose_path_msg)
-        return False
     
 
 def copy_origin_file():
@@ -155,7 +156,7 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
 def display_pages(lb_lists=[]):
     flag = check_new_path()
     if flag:
-        if check_newpath != '':
+        if new_filepath != '':
             lb_list.set('')
             input_num_str = chose_handler_str.get()
             page_lists = []
@@ -198,11 +199,14 @@ def display_pages(lb_lists=[]):
                     elif lb_lists == 'allfile':
                         rotate_page(page_lists, radio_var.get(), new_filepath)
                         alerm_msg(reminder_title, reminder_rotate_finish_msg)
-        elif new_filepath == '':
-            alerm_msg(warning_title, warning_safe_msg)
+    else:
+        alerm_msg(warning_title, warning_safe_msg)
         
 
 def open_page_web():
+    if origin_path.get() == '':
+        alerm_msg(error_title, error_chose_path_msg)
+        return
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
         return
@@ -227,6 +231,9 @@ def open_page_web():
         
 
 def rotate_one_page(r_direction):
+    if origin_path.get() == '':
+        alerm_msg(error_title, error_chose_path_msg)
+        return
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
         return

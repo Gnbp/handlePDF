@@ -49,7 +49,7 @@ reminder_copy_finish_msg = '副本生成完成！'
 
 error_chose_path_msg = '请选择起始文件！'
 error_range_msg = '请输入范围，使用‘-’相连，或者输入多个不连续的页数，使用‘+’相连!'
-
+error_file_msg = '文件操作失败，请使用Adobe reader打开该文件后另存为新文件，然后操作新文件'
 
 # Web open 
 WEB_TITLE = r'file://'
@@ -138,19 +138,24 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
         rotate_degree = 180
     else:
         print('请输入规定内的翻转角度')
-    
-    reader_obj = pdfreader(file_path)
-    writer_obj = pdfwriter()
-    total_pages = reader_obj.getNumPages()
-    
-    for rpage in range(total_pages):
-        if rpage+1 in rotate_pages:
-            page_num_obj = reader_obj.getPage(rpage).rotateClockwise(rotate_degree)
-        else:
-            page_num_obj = reader_obj.getPage(rpage)
-        writer_obj.addPage(page_num_obj)
-    with open(file_path, 'wb') as fw:
-        writer_obj.write(fw)
+    try:
+        reader_obj = pdfreader(file_path)
+        writer_obj = pdfwriter()
+        total_pages = reader_obj.getNumPages()
+        
+        for rpage in range(total_pages):
+            if rpage+1 in rotate_pages:
+                page_num_obj = reader_obj.getPage(rpage).rotateClockwise(rotate_degree)
+            else:
+                page_num_obj = reader_obj.getPage(rpage)
+            writer_obj.addPage(page_num_obj)
+        with open(file_path, 'wb') as fw:
+            writer_obj.write(fw)
+    except Exception:
+        alerm_msg(error_title, error_file_msg)
+        return 'file_error'
+    else:
+        alerm_msg(reminder_title, reminder_rotate_finish_msg)
         
 
 def display_pages(lb_lists=[]):
@@ -198,7 +203,7 @@ def display_pages(lb_lists=[]):
                         lb.configure(yscrollcommand=scroll.set)
                     elif lb_lists == 'allfile':
                         rotate_page(page_lists, radio_var.get(), new_filepath)
-                        alerm_msg(reminder_title, reminder_rotate_finish_msg)
+                        
     else:
         alerm_msg(warning_title, warning_safe_msg)
         
@@ -222,12 +227,16 @@ def open_page_web():
         check_file_path = os.path.join(check_dirpath, page_num+'.pdf')
         pdf_reader = pdfreader(new_filepath)
         pdf_writer = pdfwriter()
-        pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
-        with open(check_file_path, 'wb') as fw:
-            pdf_writer.write(fw)
-        add_web_prefix_file = WEB_TITLE + check_file_path
-        new = 0 
-        webbrowser.open(add_web_prefix_file, new=new)
+        try:
+            pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
+            with open(check_file_path, 'wb') as fw:
+                pdf_writer.write(fw)
+        except Exception:
+            alerm_msg(error_title, error_file_msg)
+        else:
+            add_web_prefix_file = WEB_TITLE + check_file_path
+            new = 0 
+            webbrowser.open(add_web_prefix_file, new=new)
         
 
 def rotate_one_page(r_direction):
@@ -242,8 +251,9 @@ def rotate_one_page(r_direction):
     except Exception:
         alerm_msg(warning_title, warning_chose_page_msg)
     else:
-        rotate_page([int(page_num)], r_direction, new_filepath)
-        open_page_web()
+        file_flag = rotate_page([int(page_num)], r_direction, new_filepath)
+        if file_flag != 'file_error':
+            open_page_web()
 
 
 def del_dir():

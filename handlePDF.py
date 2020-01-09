@@ -7,7 +7,7 @@ import shutil
 
 from PyPDF2 import PdfFileReader as pdfreader, PdfFileWriter as pdfwriter
 import webbrowser
-import time
+
 
 
 
@@ -109,20 +109,15 @@ def check_new_path():
         if os.path.exists(check_newpath):
             new_filepath = check_newpath
             return True
-        # else:
-        #     new_filepath = ''
     else:
         alerm_msg(error_title, error_chose_path_msg)
         return False
     
 
 def copy_origin_file():
-    flag = check_new_path()
-    # if flag: 
-    print(flag)
+    check_new_path()
     if not os.path.exists(filedirpath) and filedirpath != '':
         os.mkdir(filedirpath)
-    print(new_filepath)
     if os.path.exists(new_filepath) and new_filepath == check_newpath:
         is_cover = alerm_chose_msg(warning_title, warning_cover_copy_msg)
         if is_cover:
@@ -160,8 +155,6 @@ def rotate_page(rotate_pages, rotate_direction, file_path):
 def display_pages(lb_lists=[]):
     flag = check_new_path()
     if flag:
-    # check_new_path()
-    # print(new_filepath)
         if check_newpath != '':
             lb_list.set('')
             input_num_str = chose_handler_str.get()
@@ -212,6 +205,7 @@ def display_pages(lb_lists=[]):
 def open_page_web():
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
+        return
     try:
         page_num = str(lb.get(lb.curselection()))
     except Exception:
@@ -235,6 +229,7 @@ def open_page_web():
 def rotate_one_page(r_direction):
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
+        return
     try:
         page_num = str(lb.get(lb.curselection()))
     except Exception:
@@ -289,12 +284,12 @@ b5.grid(row=5, column=4)
 Button(fbot, text='清除查看文件', command=del_dir).pack()
 Button(fbot, text='退       出', command=tk.quit).pack()
 
-
 tk.mainloop()
 
+
+# import time
 # if new_filepath != '':
 #     finish_time_str = time.strftime('_%m_%d-%H', time.localtime(time.time()))
 #     last_filepath = new_filepath[:-4] + finish_time_str + new_filepath[-4:]
 #     shutil.copyfile(new_filepath, last_filepath)
 #     print('请放心，修改已经备份')
-

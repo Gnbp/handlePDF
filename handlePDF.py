@@ -202,16 +202,13 @@ def display_pages(lb_lists=[]):
                         # 设置self.lb的纵向滚动影响scroll滚动条
                         lb.configure(yscrollcommand=scroll.set)
                     elif lb_lists == 'allfile':
-                        rotate_page(page_lists, radio_var.get(), new_filepath)
-                        
+                        rotate_page(page_lists, radio_var.get(), new_filepath)  
     else:
         alerm_msg(warning_title, warning_safe_msg)
         
 
 def open_page_web():
-    if origin_path.get() == '':
-        alerm_msg(error_title, error_chose_path_msg)
-        return
+    check_new_path()
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
         return
@@ -240,9 +237,7 @@ def open_page_web():
         
 
 def rotate_one_page(r_direction):
-    if origin_path.get() == '':
-        alerm_msg(error_title, error_chose_path_msg)
-        return
+    check_new_path()
     if new_filepath == '':
         alerm_msg(warning_title, warning_safe_msg)
         return

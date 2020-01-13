@@ -33,6 +33,8 @@ new_filepath = ''
 check_dirpath = ''
 filedirpath = ''
 check_newpath = ''
+total_page_nums = 0
+
 
 
 reminder_title = '提示'
@@ -43,7 +45,7 @@ error_title = '错误'
 warning_chose_page_msg = '请先选择页码!'
 warning_safe_msg = '为了安全，请先生成副本文件!'
 warning_cover_copy_msg = '副本文件已存在，是否覆盖？'
-warning_file_msg = '0 页代表不能文件不能被操作，请使用Adobe reader打开该文件后另存为新文件，然后操作新文件'
+warning_file_msg = '共 0 页代表不能文件不能被操作，请使用Adobe reader打开该文件后另存为新文件，然后操作新文件'
 
 reminder_del_dir_msg = '缓存文件已清空!'
 reminder_rotate_finish_msg = '翻转完成!'
@@ -101,15 +103,20 @@ def alerm_chose_msg(tit, msg):
     
 # 需要开启多线程查看PDF文件页数
 def set_pdf_pages(filepath):
-    page_nums = '__'
-    try:
-        page_nums = pdfreader(filepath).getNumPages()
-    except PdfReadError:
-        page_nums = 0
-    finally:
-        pagetextvar.set('共'+str(page_nums)+'页')
-        if page_nums == 0:
-            alerm_msg(warning_title, warning_file_msg)
+    if filepath != '':
+        page_nums = '__'
+        try:
+            page_nums = pdfreader(filepath).getNumPages()
+        except PdfReadError:
+            page_nums = 0
+        finally:
+            pagetextvar.set('共 '+str(page_nums)+' 页')
+            if page_nums == 0:
+                alerm_msg(warning_title, warning_file_msg)
+            print(page_nums)
+            if page_nums > 0:
+                global total_page_nums
+                total_page_nums = page_nums
             
         
 def chose_file1():
@@ -190,12 +197,14 @@ def display_pages(lb_lists=[]):
                 if '-' in input_num_str:
                     try:
                         start_num = int(input_num_str.split('-')[0])
-                        end_num = int(input_num_str.split('-')[1]) + 1
+                        end_num = int(input_num_str.split('-')[1])
                     except ValueError:
                         alerm_msg(error_title, error_range_msg)
                         chose_handler_str.set('')
                     else:
-                        for i in range(start_num, end_num):
+                        if start_num > end_num:
+                            start_num, end_num = end_num, start_num 
+                        for i in range(start_num, end_num+1):
                             page_lists.append(i)
                 elif '+' in input_num_str:
                     page_split_lists = input_num_str.split('+')
@@ -217,57 +226,75 @@ def display_pages(lb_lists=[]):
                     chose_handler_str.set('')
                     if lb_lists == []:
                         for p in page_lists:
+                            if p > total_page_nums:
+                                break
                             lb.insert('end', p)
                         # 设置self.lb的纵向滚动影响scroll滚动条
                         lb.configure(yscrollcommand=scroll.set)
                     elif lb_lists == 'allfile':
-                        rotate_page(page_lists, radio_var.get(), new_filepath)  
-    else:
+                        # rotate_page(page_lists, radio_var.get(), new_filepath) 
+                        t3 = Thread(target=rotate_page, args=(page_lists, radio_var.get(), new_filepath))
+                        t3.start() 
+    elif origin_filepath !='':
         alerm_msg(warning_title, warning_safe_msg)
         
 
 def open_page_web():
-    check_new_path()
-    if new_filepath == '':
-        alerm_msg(warning_title, warning_safe_msg)
-        return
-    try:
-        page_num = str(lb.get(lb.curselection()))
-    except Exception:
-        alerm_msg(warning_title, warning_chose_page_msg)
-    else:
-        global check_dirpath
-        check_dirpath = os.path.join(get_dirpath(new_filepath), 'web_check')
-        if not os.path.exists(check_dirpath):
-            os.mkdir(check_dirpath)
-        check_file_path = os.path.join(check_dirpath, page_num+'.pdf')
-        pdf_reader = pdfreader(new_filepath)
-        pdf_writer = pdfwriter()
+    flag = check_new_path()
+    if flag:
+        # if new_filepath == '':
+        #     alerm_msg(warning_title, warning_safe_msg)
+        #     return
         try:
-            pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
-            with open(check_file_path, 'wb') as fw:
-                pdf_writer.write(fw)
-        except PdfReadError:
-            alerm_msg(error_title, error_file_msg)
+            page_num = str(lb.get(lb.curselection()))
+        except Exception:
+            alerm_msg(warning_title, warning_chose_page_msg)
         else:
-            add_web_prefix_file = WEB_TITLE + check_file_path
-            new = 0 
-            webbrowser.open(add_web_prefix_file, new=new)
+            global check_dirpath
+            check_dirpath = os.path.join(get_dirpath(new_filepath), 'web_check')
+            if not os.path.exists(check_dirpath):
+                os.mkdir(check_dirpath)
+            check_file_path = os.path.join(check_dirpath, page_num+'.pdf')
+            pdf_reader = pdfreader(new_filepath)
+            pdf_writer = pdfwriter()
+            try:
+                pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
+                with open(check_file_path, 'wb') as fw:
+                    pdf_writer.write(fw)
+            except PdfReadError:
+                alerm_msg(error_title, error_file_msg)
+            else:
+                add_web_prefix_file = WEB_TITLE + check_file_path
+                new = 0 
+                webbrowser.open(add_web_prefix_file, new=new)
+    elif origin_filepath !='':
+        alerm_msg(warning_title, warning_safe_msg)
+        # print('1'*80)
+    
         
 
 def rotate_one_page(r_direction):
-    check_new_path()
-    if new_filepath == '':
+    flag = check_new_path()
+    if flag:
+        # if new_filepath == '':
+        #     alerm_msg(warning_title, warning_safe_msg)
+        #     return
+        try:
+            page_num = str(lb.get(lb.curselection()))
+        except Exception:
+            alerm_msg(warning_title, warning_chose_page_msg)
+        else:
+            file_flag = rotate_page([int(page_num)], r_direction, new_filepath)
+            if file_flag != 'file_error':
+                # open_page_web()
+                threading_open_page()
+    elif origin_filepath !='':
         alerm_msg(warning_title, warning_safe_msg)
-        return
-    try:
-        page_num = str(lb.get(lb.curselection()))
-    except Exception:
-        alerm_msg(warning_title, warning_chose_page_msg)
-    else:
-        file_flag = rotate_page([int(page_num)], r_direction, new_filepath)
-        if file_flag != 'file_error':
-            open_page_web()
+        # print('1'*80)
+
+def threading_open_page():
+    t2 = Thread(target=open_page_web)
+    t2.start()
 
 
 def del_dir():
@@ -301,7 +328,7 @@ scroll = Scrollbar(fleft, command=lb.yview)
 scroll.pack(side=RIGHT, fill=Y, pady=10)
 
 
-b0 = Button(fright, text='浏览器查看', command=open_page_web)
+b0 = Button(fright, text='浏览器查看', command=threading_open_page)
 b0.grid(row=0, column=4)
 
 b3 = Button(fright, text='向左翻九十', command=lambda : rotate_one_page('270'))

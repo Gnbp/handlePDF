@@ -36,7 +36,6 @@ check_newpath = ''
 total_page_nums = 0
 
 
-
 reminder_title = '提示'
 warning_title = '警告'
 error_title = '错误'
@@ -68,6 +67,7 @@ tk = Tk()
 tk.title(TITLE)
 tk.geometry(SIZE)
 tk.columnconfigure(0, weight=1)
+tk.resizable(0, 0)
 origin_path = StringVar()
 chose_handler_str = StringVar()
 lb_list = StringVar()
@@ -98,10 +98,11 @@ def alerm_msg(tit, msg):
     elif tit == '错误':
         messagebox.showerror(tit, msg)
     
+
 def alerm_chose_msg(tit, msg):
     return messagebox.askokcancel(tit, msg)
-    
-# 需要开启多线程查看PDF文件页数
+
+
 def set_pdf_pages(filepath):
     if filepath != '':
         page_nums = '__'
@@ -113,7 +114,6 @@ def set_pdf_pages(filepath):
             pagetextvar.set('共 '+str(page_nums)+' 页')
             if page_nums == 0:
                 alerm_msg(warning_title, warning_file_msg)
-            print(page_nums)
             if page_nums > 0:
                 global total_page_nums
                 total_page_nums = page_nums
@@ -232,7 +232,6 @@ def display_pages(lb_lists=[]):
                         # 设置self.lb的纵向滚动影响scroll滚动条
                         lb.configure(yscrollcommand=scroll.set)
                     elif lb_lists == 'allfile':
-                        # rotate_page(page_lists, radio_var.get(), new_filepath) 
                         t3 = Thread(target=rotate_page, args=(page_lists, radio_var.get(), new_filepath))
                         t3.start() 
     elif origin_filepath !='':
@@ -242,11 +241,8 @@ def display_pages(lb_lists=[]):
 def open_page_web():
     flag = check_new_path()
     if flag:
-        # if new_filepath == '':
-        #     alerm_msg(warning_title, warning_safe_msg)
-        #     return
         try:
-            page_num = str(lb.get(lb.curselection()))
+            page_num_str = str(lb.get(lb.curselection()))
         except Exception:
             alerm_msg(warning_title, warning_chose_page_msg)
         else:
@@ -254,11 +250,11 @@ def open_page_web():
             check_dirpath = os.path.join(get_dirpath(new_filepath), 'web_check')
             if not os.path.exists(check_dirpath):
                 os.mkdir(check_dirpath)
-            check_file_path = os.path.join(check_dirpath, page_num+'.pdf')
-            pdf_reader = pdfreader(new_filepath)
-            pdf_writer = pdfwriter()
+            check_file_path = os.path.join(check_dirpath, page_num_str+'.pdf')
             try:
-                pdf_writer.addPage(pdf_reader.getPage(int(page_num)-1))
+                pdf_reader = pdfreader(new_filepath)
+                pdf_writer = pdfwriter()
+                pdf_writer.addPage(pdf_reader.getPage(int(page_num_str)-1))
                 with open(check_file_path, 'wb') as fw:
                     pdf_writer.write(fw)
             except PdfReadError:
@@ -269,16 +265,11 @@ def open_page_web():
                 webbrowser.open(add_web_prefix_file, new=new)
     elif origin_filepath !='':
         alerm_msg(warning_title, warning_safe_msg)
-        # print('1'*80)
-    
         
 
 def rotate_one_page(r_direction):
     flag = check_new_path()
     if flag:
-        # if new_filepath == '':
-        #     alerm_msg(warning_title, warning_safe_msg)
-        #     return
         try:
             page_num = str(lb.get(lb.curselection()))
         except Exception:
@@ -286,11 +277,10 @@ def rotate_one_page(r_direction):
         else:
             file_flag = rotate_page([int(page_num)], r_direction, new_filepath)
             if file_flag != 'file_error':
-                # open_page_web()
                 threading_open_page()
     elif origin_filepath !='':
         alerm_msg(warning_title, warning_safe_msg)
-        # print('1'*80)
+        
 
 def threading_open_page():
     t2 = Thread(target=open_page_web)
@@ -323,10 +313,8 @@ Button(ftop, text='一键翻转', command=lambda : display_pages('allfile')).gri
 lb = Listbox(fleft, listvariable=lb_list)
 lb.pack(side=LEFT, fill=BOTH, expand=YES)
 
-
 scroll = Scrollbar(fleft, command=lb.yview)
 scroll.pack(side=RIGHT, fill=Y, pady=10)
-
 
 b0 = Button(fright, text='浏览器查看', command=threading_open_page)
 b0.grid(row=0, column=4)
@@ -346,9 +334,3 @@ Button(fbot, text='退       出', command=tk.quit).pack()
 tk.mainloop()
 
 
-# import time
-# if new_filepath != '':
-#     finish_time_str = time.strftime('_%m_%d-%H', time.localtime(time.time()))
-#     last_filepath = new_filepath[:-4] + finish_time_str + new_filepath[-4:]
-#     shutil.copyfile(new_filepath, last_filepath)
-#     print('请放心，修改已经备份')

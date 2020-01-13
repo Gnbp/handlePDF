@@ -1,6 +1,7 @@
 import os
 import shutil
 import webbrowser
+from threading import Thread
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox, StringVar, Tk
 from tkinter import Label, Entry, Button, Listbox, Radiobutton, Frame, Scrollbar
@@ -9,7 +10,6 @@ from tkinter import BOTH, X, Y, LEFT, RIGHT, N, S, E, W, YES
 
 from PyPDF2 import PdfFileReader as pdfreader, PdfFileWriter as pdfwriter
 from PyPDF2.utils import PdfReadError
-
 
 
 
@@ -43,6 +43,7 @@ error_title = '错误'
 warning_chose_page_msg = '请先选择页码!'
 warning_safe_msg = '为了安全，请先生成副本文件!'
 warning_cover_copy_msg = '副本文件已存在，是否覆盖？'
+warning_file_msg = '0 页代表不能文件不能被操作，请使用Adobe reader打开该文件后另存为新文件，然后操作新文件'
 
 reminder_del_dir_msg = '缓存文件已清空!'
 reminder_rotate_finish_msg = '翻转完成!'
@@ -70,6 +71,8 @@ chose_handler_str = StringVar()
 lb_list = StringVar()
 radio_var = StringVar()
 radio_var.set('90')
+pagetextvar = StringVar()
+pagetextvar.set('共__页')
 
 
 ftop = Frame(tk)
@@ -97,22 +100,25 @@ def alerm_chose_msg(tit, msg):
     return messagebox.askokcancel(tit, msg)
     
 # 需要开启多线程查看PDF文件页数
-def get_pdf_pages(filepath):
+def set_pdf_pages(filepath):
+    page_nums = '__'
     try:
         page_nums = pdfreader(filepath).getNumPages()
     except PdfReadError:
         page_nums = 0
     finally:
-        return page_nums
-
+        pagetextvar.set('共'+str(page_nums)+'页')
+        if page_nums == 0:
+            alerm_msg(warning_title, warning_file_msg)
+            
+        
 def chose_file1():
     _path1 = askopenfilename()
     origin_path.set(_path1)
-    print('1'*80)
-    pages = get_pdf_pages(_path1)
-    print(pages)
-    print('1'*80)
-
+    t1 = Thread(target=set_pdf_pages, args=(_path1,))
+    t1.start()
+    
+    
 def check_new_path():
     if origin_path.get() != '':
         global origin_filepath, origin_filename, filedirpath, new_filepath, check_newpath
@@ -277,6 +283,7 @@ Button(ftop, text='生成副本', command=copy_origin_file).grid(row=0, column=3
 Label(ftop, text='翻转页码').grid(row=1, column=0)
 Entry(ftop, textvariable=chose_handler_str).grid(row=1, column=1)
 Button(ftop, text='翻转页数', command=display_pages).grid(row=1, column=2)
+Label(ftop, textvariable=pagetextvar).grid(row=1,column=3)
 
 r1 = Radiobutton(ftop, text='向左翻九十', variable=radio_var, value='270')
 r1.grid(row=2, column=0)
